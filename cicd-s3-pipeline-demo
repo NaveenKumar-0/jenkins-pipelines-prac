@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    tools {
+        maven 'maven'
+    }
+    stages {
+        stage(checkout) {
+            steps {
+                git 'https://github.com/RAHAMSHAIK007/jenkins-java-project.git'
+            }
+        }
+        stage(compile) {
+            steps {
+                sh 'mvn compile'
+            }
+        }
+        stage(test) {
+            steps {
+                sh 'mvn test'
+            }
+        }
+        stage(artifact) {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage(s3) {
+            steps {
+                s3Upload consoleLogLevel: 'INFO', dontSetBuildResultOnFailure: false, dontWaitForConcurrentBuildCompletion: false, entries: [[bucket: 'artifactory-nexus-repo-bucket', excludedFile: '', flatten: false, gzipFiles: false, keepForever: false, managedArtifacts: false, noUploadOnFailure: false, selectedRegion: 'us-east-1', showDirectlyInBrowser: false, sourceFile: 'target/NETFLIX-1.2.2.war', storageClass: 'STANDARD', uploadFromSlave: false, useServerSideEncryption: false]], pluginFailureResultConstraint: 'FAILURE', profileName: 's3 user', userMetadata: []
+            }
+        }
+        stage(deploy) {
+            steps {
+                echo 'deploy completed'
+            }
+        }
+    }
+}
