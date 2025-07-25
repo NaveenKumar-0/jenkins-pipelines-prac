@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    tools {
+        maven 'maven'
+    }
+    stages {
+        stage(checkout) {
+            steps {
+                git 'https://github.com/RAHAMSHAIK007/jenkins-java-project.git'
+            }
+        }
+        stage(compile) {
+            steps {
+                sh 'mvn compile'
+            }
+        }
+        stage(test) {
+            steps {
+                sh 'mvn test'
+            }
+        }
+        stage(artifact) {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage(nexus) {
+            steps {
+                echo 'artifact pushed to nexus repo'
+            }
+        }
+        stage(deploy) {
+            steps {
+                echo 'deployment completed'
+            }
+        }
+    }
+}
