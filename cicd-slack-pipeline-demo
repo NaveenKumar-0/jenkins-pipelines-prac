@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+    tools {
+        maven 'maven'
+    }
+    stages {
+        stage(checkout) {
+            steps {
+                git 'https://github.com/RAHAMSHAIK007/jenkins-java-project.git'
+            }
+        }
+        stage(compile) {
+            steps {
+                sh 'mvn compile'
+            }
+        }
+        stage(test) {
+            steps {
+                sh 'mvn test'
+            }
+        }
+        stage(artifact) {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage(s3) {
+            steps {
+                s3Upload consoleLogLevel: 'INFO', dontSetBuildResultOnFailure: false, dontWaitForConcurrentBuildCompletion: false, entries: [[bucket: 'artifactory-nexus-repo-bucket', excludedFile: '', flatten: false, gzipFiles: false, keepForever: false, managedArtifacts: false, noUploadOnFailure: false, selectedRegion: 'us-east-1', showDirectlyInBrowser: false, sourceFile: 'target/NETFLIX-1.2.2.war', storageClass: 'STANDARD', uploadFromSlave: false, useServerSideEncryption: false]], pluginFailureResultConstraint: 'FAILURE', profileName: 's3 user', userMetadata: []
+            }
+        }
+        stage(deploy) {
+             input {
+                message "continue with deployment ?"
+                ok "yes"
+            }
+            steps {
+                deploy adapters: [tomcat9(alternativeDeploymentContext: '', credentialsId: 'tomcat_manager_app_cred', path: '', url: 'http://3.84.235.209:8080/')], contextPath: 'netflix', war: 'target/*.war'
+            }
+        }
+    }
+     post {
+        always {
+            echo "slack notify"
+            slackSend (
+                 channel: '#ci-cd-jenkins-alerts', message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} \n build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+            )
+        }
+    }
+}
